@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id                String   @id @default(uuid())
+  name              String
+  linkedinUrl       String   @unique
+  profilePictureUrl String?
+  status            String   @default("PENDING") // PENDING, SUCCESS, ERROR
+  scratchAttempts   Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Cookie {
+  id        String   @id @default(uuid())
+  value     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
