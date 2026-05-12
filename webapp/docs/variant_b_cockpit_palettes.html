@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Career Intelligence — Cockpit · Estudo de paletas</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ─── Paleta padrão (sobrescrita pelo data-palette) ─── */
+  :root {
+    --bg: #0b0c0f;
+    --panel: #14161b;
+    --panel-2: #1a1d24;
+    --line: #25282f;
+    --line-2: #32363f;
+    --text: #e6e7ea;
+    --text-2: #9aa0aa;
+    --text-3: #61656d;
+    --accent: #c9a55c;
+    --accent-soft: rgba(201,165,92,.12);
+    --accent-border: rgba(201,165,92,.3);
+    --good: #6ec1a8;
+    --warn: #d4a23b;
+    --danger: #d76b5f;
+    --logo-bg: var(--accent);
+    --logo-fg: #0a0b0e;
+  }
+
+  /* ─── A · Amber Gold (original) ─── */
+  [data-palette="amber"] {
+    --bg: #0b0c0f; --panel: #14161b; --panel-2: #1a1d24;
+    --line: #25282f; --line-2: #32363f;
+    --text: #e6e7ea; --text-2: #9aa0aa; --text-3: #61656d;
+    --accent: #c9a55c; --accent-soft: rgba(201,165,92,.12); --accent-border: rgba(201,165,92,.3);
+    --good: #6ec1a8; --warn: #d4a23b; --danger: #d76b5f;
+    --logo-bg: var(--accent); --logo-fg: #0a0b0e;
+  }
+
+  /* ─── B · Midnight Indigo (banking) ─── */
+  [data-palette="indigo"] {
+    --bg: #0a0e1a; --panel: #131829; --panel-2: #1b2138;
+    --line: #262d45; --line-2: #353d57;
+    --text: #e8eaf2; --text-2: #9ba3bc; --text-3: #5d6585;
+    --accent: #a5b4fc; --accent-soft: rgba(165,180,252,.12); --accent-border: rgba(165,180,252,.3);
+    --good: #86efac; --warn: #fbbf24; --danger: #fca5a5;
+    --logo-bg: var(--accent); --logo-fg: #0a0e1a;
+  }
+
+  /* ─── C · Forest Brass (heritage) ─── */
+  [data-palette="forest"] {
+    --bg: #0b1310; --panel: #131c18; --panel-2: #1a2520;
+    --line: #243029; --line-2: #2f3d35;
+    --text: #e7ece9; --text-2: #98a39d; --text-3: #5d6863;
+    --accent: #d4a955; --accent-soft: rgba(212,169,85,.12); --accent-border: rgba(212,169,85,.3);
+    --good: #86c198; --warn: #d4a955; --danger: #d18b6d;
+    --logo-bg: var(--accent); --logo-fg: #0b1310;
+  }
+
+  /* ─── D · Oxblood Cream (luxury / law firm) ─── */
+  [data-palette="oxblood"] {
+    --bg: #14080a; --panel: #1f1014; --panel-2: #2a161c;
+    --line: #3a1f26; --line-2: #4a2a32;
+    --text: #f4ebe3; --text-2: #b8a59b; --text-3: #806e64;
+    --accent: #e8c69b; --accent-soft: rgba(232,198,155,.12); --accent-border: rgba(232,198,155,.3);
+    --good: #b8d4a8; --warn: #e8c69b; --danger: #d76b5f;
+    --logo-bg: var(--accent); --logo-fg: #14080a;
+  }
+
+  /* ─── E · Platinum Light (light mode) ─── */
+  [data-palette="platinum"] {
+    --bg: #f6f5f2; --panel: #ffffff; --panel-2: #f0eeea;
+    --line: #e2dfd9; --line-2: #cfcbc2;
+    --text: #1a1814; --text-2: #5b574e; --text-3: #8d887d;
+    --accent: #1a1814; --accent-soft: rgba(26,24,20,.06); --accent-border: rgba(26,24,20,.18);
+    --good: #2f7a52; --warn: #a8741a; --danger: #a8341a;
+    --logo-bg: var(--text); --logo-fg: var(--bg);
+  }
+
+  /* ─── F · Pure Graphite (mono / Apple-tier) ─── */
+  [data-palette="graphite"] {
+    --bg: #0a0a0a; --panel: #141414; --panel-2: #1c1c1c;
+    --line: #262626; --line-2: #333333;
+    --text: #ffffff; --text-2: #a1a1aa; --text-3: #525252;
+    --accent: #ffffff; --accent-soft: rgba(255,255,255,.08); --accent-border: rgba(255,255,255,.2);
+    --good: #4ade80; --warn: #facc15; --danger: #f87171;
+    --logo-bg: var(--accent); --logo-fg: var(--bg);
+  }
+
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-feature-settings: "ss01"; transition: background .25s; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .num { font-variant-numeric: tabular-nums; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .panel-2 { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; }
+  .label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); font-weight: 500; }
+  .nav-item { display:flex; align-items:center; gap:.6rem; padding:.5rem .75rem; border-radius:6px; color:var(--text-2); font-size:13px; cursor:pointer; }
+  .nav-item:hover { background: var(--panel-2); color: var(--text); }
+  .nav-item.active { background: var(--panel-2); color: var(--text); border: 1px solid var(--line-2); }
+  .nav-item.active .dot { background: var(--accent); }
+  .dot { width: 5px; height: 5px; border-radius: 999px; background: var(--text-3); display: inline-block; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+  .ring-bg { stroke: var(--line); }
+  .ring-fg { stroke: var(--accent); }
+  .bar-bg { background: var(--line); }
+  .bar-fg { background: var(--accent); }
+  .chip { display:inline-flex; align-items:center; gap:.4rem; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; letter-spacing:.04em; }
+  .chip-good { background: color-mix(in srgb, var(--good) 12%, transparent); color: var(--good); border:1px solid color-mix(in srgb, var(--good) 30%, transparent); }
+  .chip-warn { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border:1px solid color-mix(in srgb, var(--warn) 30%, transparent); }
+  .chip-danger { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border:1px solid color-mix(in srgb, var(--danger) 30%, transparent); }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+
+  /* Palette switcher */
+  .pal-bar { position: fixed; top: 16px; right: 16px; z-index: 100; display: flex; gap: 8px; padding: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(8px); }
+  .pal-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: background .15s; }
+  .pal-btn:hover { background: var(--panel-2); }
+  .pal-btn.active { background: var(--panel-2); outline: 1px solid var(--accent); }
+  .pal-swatch { display: flex; height: 16px; border-radius: 3px; overflow: hidden; border: 1px solid var(--line); }
+  .pal-swatch span { width: 8px; height: 100%; }
+  .pal-name { font-size: 10px; color: var(--text-2); letter-spacing: .04em; }
+  .pal-btn.active .pal-name { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body data-palette="amber">
+
+<!-- PALETTE SWITCHER -->
+<div class="pal-bar mono">
+  <button class="pal-btn active" data-set="amber" onclick="setPal(this)">
+    <div class="pal-swatch"><span style="background:#0b0c0f"></span><span style="background:#14161b"></span><span style="background:#c9a55c"></span><span style="background:#6ec1a8"></span></div>
+    <span class="pal-name">Amber</span>
+  </button>
+  <button class="pal-btn" data-set="indigo" onclick="setPal(this)">
+    <div class="pal-swatch"><span style="background:#0a0e1a"></span><span style="background:#131829"></span><span style="background:#a5b4fc"></span><span style="background:#86efac"></span></div>
+    <span class="pal-name">Indigo</span>
+  </button>
+  <button class="pal-btn" data-set="forest" onclick="setPal(this)">
+    <div class="pal-swatch"><span style="background:#0b1310"></span><span style="background:#131c18"></span><span style="background:#d4a955"></span><span style="background:#86c198"></span></div>
+    <span class="pal-name">Forest</span>
+  </button>
+  <button class="pal-btn" data-set="oxblood" onclick="setPal(this)">
+    <div class="pal-swatch"><span style="background:#14080a"></span><span style="background:#1f1014"></span><span style="background:#e8c69b"></span><span style="background:#b8d4a8"></span></div>
+    <span class="pal-name">Oxblood</span>
+  </button>
+  <button class="pal-btn" data-set="platinum" onclick="setPal(this)">
+    <div class="pal-swatch"><span style="background:#f6f5f2"></span><span style="background:#ffffff"></span><span style="background:#1a1814"></span><span style="background:#2f7a52"></span></div>
+    <span class="pal-name">Platinum</span>
+  </button>
+  <button class="pal-btn" data-set="graphite" onclick="setPal(this)">
+    <div class="pal-swatch"><span style="background:#0a0a0a"></span><span style="background:#141414"></span><span style="background:#ffffff"></span><span style="background:#4ade80"></span></div>
+    <span class="pal-name">Graphite</span>
+  </button>
+</div>
+
+<script>
+  function setPal(btn) {
+    document.body.setAttribute('data-palette', btn.dataset.set);
+    document.querySelectorAll('.pal-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+
+<div class="grid" style="grid-template-columns: 248px 1fr; min-height: 100vh;">
+
+  <!-- SIDEBAR -->
+  <aside class="border-r p-4 sticky top-0 h-screen overflow-y-auto" style="border-color: var(--line); background: color-mix(in srgb, var(--bg) 92%, #000);">
+    <div class="flex items-center gap-2 px-2 mb-7">
+      <div class="w-7 h-7 rounded-md grid place-items-center font-bold text-sm" style="background: var(--logo-bg); color: var(--logo-fg);">FD</div>
+      <div>
+        <p class="text-sm font-semibold leading-tight">Career Intelligence</p>
+        <p class="text-[10px] mono" style="color:var(--text-3)">v2.4 · principal vault</p>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <p class="label px-2 mb-2">Diagnóstico</p>
+      <a class="nav-item active"><span class="dot"></span>Visão geral<span class="ml-auto mono text-[10px]" style="color:var(--text-3)">⌘1</span></a>
+      <a class="nav-item"><span class="dot"></span>Técnico<span class="ml-auto mono text-[10px]" style="color:var(--text-3)">⌘2</span></a>
+      <a class="nav-item"><span class="dot"></span>Social<span class="ml-auto mono text-[10px]" style="color:var(--text-3)">⌘3</span></a>
+    </div>
+
+    <div class="mb-6">
+      <p class="label px-2 mb-2">Estratégia</p>
+      <a class="nav-item"><span class="dot"></span>Trajetória<span class="ml-auto mono text-[10px]" style="color:var(--text-3)">⌘4</span></a>
+      <a class="nav-item"><span class="dot"></span>Algoritmo<span class="ml-auto mono text-[10px]" style="color:var(--text-3)">⌘5</span></a>
+    </div>
+
+    <div class="mb-6">
+      <p class="label px-2 mb-2">Ação</p>
+      <a class="nav-item"><span class="dot"></span>Oportunidades<span class="ml-auto mono text-[10px]" style="color:var(--text-3)">⌘6</span></a>
+      <a class="nav-item"><span class="dot"></span>Vaga ideal<span class="ml-auto mono text-[10px]" style="color:var(--text-3)">⌘7</span></a>
+    </div>
+
+    <div class="mb-6">
+      <p class="label px-2 mb-2">Sistema</p>
+      <a class="nav-item"><span class="dot"></span>Dados & fontes</a>
+    </div>
+
+    <div class="panel-2 p-3 mt-8 mono">
+      <div class="flex items-center justify-between mb-2">
+        <span class="label">Score atual</span>
+        <span class="text-[10px]" style="color:var(--good)">↑ 4</span>
+      </div>
+      <div class="flex items-baseline gap-1">
+        <span class="text-3xl font-semibold num" style="color:var(--accent)">73</span>
+        <span class="text-xs" style="color:var(--text-3)">/100</span>
+      </div>
+      <div class="h-1 bar-bg rounded-full mt-2 overflow-hidden">
+        <div class="h-full bar-fg" style="width:73%"></div>
+      </div>
+      <p class="text-[10px] mt-2" style="color:var(--text-3)">last sync · 3d</p>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <header class="border-b px-8 py-3 flex items-center justify-between sticky top-0 z-10" style="border-color: var(--line); background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(8px);">
+      <div class="flex items-center gap-3">
+        <span class="mono text-xs" style="color:var(--text-3)">~/career-intel</span>
+        <span style="color:var(--text-3)">/</span>
+        <span class="text-sm">Visão geral</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="panel-2 px-3 py-1.5 text-xs flex items-center gap-2"><span class="dot" style="background:var(--good)"></span>Dado fresco · 3d</button>
+        <button class="panel-2 px-3 py-1.5 text-xs">⌘K · buscar</button>
+        <button class="px-3 py-1.5 text-xs rounded-md font-medium" style="background:var(--accent); color: var(--logo-fg);">Re-sincronizar</button>
+      </div>
+    </header>
+
+    <div class="p-8 max-w-[1280px]">
+
+      <!-- SCORE + COMPONENTS -->
+      <section class="grid gap-5" style="grid-template-columns: 360px 1fr;">
+        <div class="panel p-7 relative overflow-hidden">
+          <p class="label">Brand Score</p>
+          <div class="relative w-[220px] h-[220px] mx-auto mt-4">
+            <svg viewBox="0 0 220 220" class="w-full h-full -rotate-90">
+              <circle cx="110" cy="110" r="96" fill="none" stroke-width="14" class="ring-bg"/>
+              <circle cx="110" cy="110" r="96" fill="none" stroke-width="14" class="ring-fg" stroke-linecap="round" stroke-dasharray="603" stroke-dashoffset="163"/>
+            </svg>
+            <div class="absolute inset-0 grid place-items-center">
+              <div class="text-center">
+                <p class="text-[64px] font-extrabold leading-none num" style="color:var(--accent)">73</p>
+                <p class="text-[11px] mono mt-1" style="color:var(--text-3)">de 100</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between mt-4">
+            <span class="chip chip-good">BOM</span>
+            <span class="text-xs mono num" style="color:var(--text-2)">percentil <span style="color:var(--text)">68</span></span>
+          </div>
+          <div class="mt-4 pt-4 border-t" style="border-color: var(--line);">
+            <div class="flex justify-between text-[10px] mono" style="color:var(--text-3)">
+              <span>0</span><span>40</span><span>60</span><span>80</span><span>100</span>
+            </div>
+            <div class="h-[3px] bar-bg mt-1 relative">
+              <div class="absolute inset-y-0" style="left:60%;width:20%;background: var(--accent-soft);"></div>
+              <div class="absolute -top-1 w-[3px] h-[7px]" style="left:73%;background:var(--accent)"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel p-7">
+          <div class="flex items-baseline justify-between mb-5">
+            <p class="label">Decomposição do score</p>
+            <p class="mono text-[10px]" style="color:var(--text-3)">5 sinais · v2.4 model</p>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-sm mb-1.5"><span style="color:var(--text-2)">Validação de skills</span><span class="num font-semibold">82</span></div>
+              <div class="h-1.5 bar-bg rounded-full overflow-hidden"><div class="h-full bar-fg" style="width:82%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1.5"><span style="color:var(--text-2)">Diversidade de rede</span><span class="num font-semibold">65</span></div>
+              <div class="h-1.5 bar-bg rounded-full overflow-hidden"><div class="h-full bar-fg" style="width:65%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1.5"><span style="color:var(--text-2)">Momentum de aprendizado</span><span class="num font-semibold">78</span></div>
+              <div class="h-1.5 bar-bg rounded-full overflow-hidden"><div class="h-full bar-fg" style="width:78%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1.5"><span style="color:var(--text-2)">Alinhamento de carreira</span><span class="num font-semibold">71</span></div>
+              <div class="h-1.5 bar-bg rounded-full overflow-hidden"><div class="h-full bar-fg" style="width:71%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1.5"><span style="color:var(--text-2)">Posicionamento de mercado</span><span class="num font-semibold">69</span></div>
+              <div class="h-1.5 bar-bg rounded-full overflow-hidden"><div class="h-full bar-fg" style="width:69%"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI ROW -->
+      <section class="grid grid-cols-4 gap-5 mt-5">
+        <div class="kpi">
+          <p class="label">Conexões</p>
+          <p class="text-[34px] font-bold mt-2 num leading-none">1.247</p>
+          <p class="text-xs mono mt-2" style="color:var(--good)">+38 / 30d</p>
+        </div>
+        <div class="kpi">
+          <p class="label">Certificações</p>
+          <p class="text-[34px] font-bold mt-2 num leading-none">8</p>
+          <p class="text-xs mono mt-2" style="color:var(--text-3)">5 autoridades</p>
+        </div>
+        <div class="kpi">
+          <p class="label">Skills validadas</p>
+          <p class="text-[34px] font-bold mt-2 num leading-none">12<span class="text-xl" style="color:var(--text-3)">/27</span></p>
+          <p class="text-xs mono mt-2" style="color:var(--warn)">44% endorsed</p>
+        </div>
+        <div class="kpi">
+          <p class="label">Aprendizado</p>
+          <p class="text-[34px] font-bold mt-2 num leading-none">43</p>
+          <p class="text-xs mono mt-2" style="color:var(--text-3)">cursos · 2026</p>
+        </div>
+      </section>
+
+      <!-- LENS + ACTIONS -->
+      <section class="grid gap-5 mt-5" style="grid-template-columns: 1.1fr 1fr;">
+        <div class="panel p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-7 h-7 rounded-md grid place-items-center" style="background:var(--accent-soft); color:var(--accent)">◎</span>
+            <p class="text-sm font-semibold">Recruiter Lens</p>
+            <span class="chip chip-good ml-auto">EQUILIBRADO</span>
+          </div>
+          <p class="text-xs mb-4" style="color:var(--text-2)">Como sua lista de skills é lida do outro lado.</p>
+          <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-5xl font-bold num">27</span>
+            <span class="text-xs" style="color:var(--text-3)">skills declaradas</span>
+          </div>
+          <div class="relative h-1 bar-bg rounded-full">
+            <div class="absolute inset-y-0 rounded-full" style="left:15%;width:10%;background: color-mix(in srgb, var(--good) 40%, transparent);"></div>
+            <div class="absolute -top-1 w-[3px] h-[7px]" style="left:27%;background:var(--accent)"></div>
+          </div>
+          <div class="flex justify-between text-[10px] mono mt-1.5" style="color:var(--text-3)">
+            <span>0</span><span style="color:var(--good)">15–25 ideal</span><span>100+</span>
+          </div>
+          <ul class="text-xs mt-5 space-y-2" style="color:var(--text-2)">
+            <li class="flex gap-2"><span class="mono" style="color:var(--accent)">›</span>15 skills sem endosso (56%) — descontadas em buscas booleanas.</li>
+            <li class="flex gap-2"><span class="mono" style="color:var(--accent)">›</span>Top 3 concentram 62% da prova social — esse é seu núcleo.</li>
+            <li class="flex gap-2"><span class="mono" style="color:var(--accent)">›</span>Fixar 3 prioritárias no topo aumenta retenção em 40%.</li>
+          </ul>
+        </div>
+
+        <div class="panel p-6">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm font-semibold">Ações priorizadas</p>
+            <span class="mono text-[10px]" style="color:var(--text-3)">3 abertas</span>
+          </div>
+          <ol class="space-y-3">
+            <li class="panel-2 p-3 flex gap-3">
+              <span class="mono text-xs num font-bold w-5" style="color:var(--accent)">01</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2 mb-1">
+                  <p class="text-sm font-medium">Curar skills declaradas</p>
+                  <span class="chip chip-danger">ALTO</span>
+                </div>
+                <p class="text-xs" style="color:var(--text-3)">27 listadas · só 12 com endosso. Cortar para 8 prioritárias.</p>
+              </div>
+            </li>
+            <li class="panel-2 p-3 flex gap-3">
+              <span class="mono text-xs num font-bold w-5" style="color:var(--accent)">02</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2 mb-1">
+                  <p class="text-sm font-medium">Diversificar setores na rede</p>
+                  <span class="chip chip-warn">MÉDIO</span>
+                </div>
+                <p class="text-xs" style="color:var(--text-3)">71% da rede em apenas 2 indústrias. Expandir fintech / healthtech.</p>
+              </div>
+            </li>
+            <li class="panel-2 p-3 flex gap-3">
+              <span class="mono text-xs num font-bold w-5" style="color:var(--accent)">03</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2 mb-1">
+                  <p class="text-sm font-medium">Cadência editorial mensal</p>
+                  <span class="chip chip-warn">MÉDIO</span>
+                </div>
+                <p class="text-xs" style="color:var(--text-3)">1 reflexão técnica/mês · 3,2× mais visibilidade em buscas.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
