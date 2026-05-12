@@ -10,6 +10,17 @@ export async function GET(request) {
       100,
     );
 
+    const status = searchParams.get("status");
+
+    const where = {};
+    if (status) {
+      where.status = status;
+    } else {
+      where.OR = [
+        { scratchAttempts: { gt: 0 } },
+        { status: { in: ["SUCCESS", "ERROR", "ERROR_AUTHWALL"] } },
+      ];
+    }
 
     const [total, records] = await Promise.all([
       prisma.profile.count({ where }),

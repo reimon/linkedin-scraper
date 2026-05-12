@@ -12,7 +12,7 @@ model Profile {
   name              String
   linkedinUrl       String   @unique
   profilePictureUrl String?
-  status            String   @default("PENDING") // PENDING, SUCCESS, ERROR
+  status            String   @default("PENDING") // PENDING, SUCCESS, ERROR, ERROR_AUTHWALL
   scratchAttempts   Int      @default(0)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -20,7 +20,58 @@ model Profile {
 
 model Cookie {
   id        String   @id @default(uuid())
+  label     String?
+  accountId String?
   value     String
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model LinkedInAccount {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  password    String
+  label       String?
+  status      String    @default("PENDING") // PENDING, OK, ERROR, NEEDS_2FA
+  lastError   String?
+  lastLoginAt DateTime?
+  cookieId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ScrapeJob {
+  id            String   @id @default(uuid())
+  profileId     String
+  status        String   @default("QUEUED") // QUEUED, RUNNING, RETRY, SUCCESS, FAILED
+  priority      Int      @default(0)
+  attempts      Int      @default(0)
+  maxAttempts   Int      @default(5)
+  nextRunAt     DateTime @default(now())
+  lockedAt      DateTime?
+  lockToken     String?
+  providerHint  String?
+  lastErrorCode String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, nextRunAt, priority])
+  @@index([profileId])
+}
+
+model ScrapeJobAttempt {
+  id          String   @id @default(uuid())
+  jobId        String
+  provider     String
+  success      Boolean
+  errorCode    String?
+  latencyMs    Int?
+  httpStatus   Int?
+  retryAfterMs Int?
+  diagnostics  String?
+  createdAt    DateTime @default(now())
+
+  @@index([jobId, createdAt])
+  @@index([provider, createdAt])
 }
