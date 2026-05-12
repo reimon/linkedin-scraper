@@ -591,8 +591,6 @@ export default function Home() {
             </ol>
           </div>
 
-          <div style={{ background: "rgba(0,0,0,0.2)", padding: "20px", borderRadius: "10px", border: "1px solid var(--surface-border)", marginBottom: "20px" }}>
-            <h3 style={{ marginBottom: "15px", fontSize: "1.1rem" }}>Adicionar Nova Conta</h3>
             <div className="input-group">
               <label>Valor do cookie <code>li_at</code>:</label>
               <textarea 
