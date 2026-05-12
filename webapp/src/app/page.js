@@ -27,6 +27,7 @@ export default function Home() {
   const [recordsTotal, setRecordsTotal] = useState(0);
   const [recordsHasMore, setRecordsHasMore] = useState(false);
   const [loadingRecords, setLoadingRecords] = useState(false);
+  const [recordsFilter, setRecordsFilter] = useState("SUCCESS");
   const [retryingRecordId, setRetryingRecordId] = useState(null);
   const [cookies, setCookies] = useState([]);
   const [newCookieValue, setNewCookieValue] = useState("");
@@ -35,39 +36,20 @@ export default function Home() {
 
   const PAGE_SIZE = 25;
 
+  const bookmarkletCode = `javascript:(function(){const c=document.cookie;const dummy=document.createElement('textarea');document.body.appendChild(dummy);dummy.value=c;dummy.select();document.execCommand('copy');document.body.removeChild(dummy);alert('✅ Cookies copiados! Agora cole no campo do Scraper.');})();`;
+
   const fetchStats = async () => {
     const res = await fetch("/api/stats");
     const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Erro ao buscar estatísticas.");
-    }
-
+    if (!res.ok) throw new Error(data.error || "Erro ao buscar estatísticas.");
     setStats((prev) => ({ ...prev, ...data }));
   };
 
   const handleTabChange = async (tab) => {
     setActiveTab(tab);
-    if (tab === "execution") {
-      try {
-        await fetchStats();
-      } catch (e) {
-        const message =
-          e instanceof Error ? e.message : "Erro ao buscar estatísticas.";
-        setLogs((prev) => [
-          ...prev,
-          `[${new Date().toLocaleTimeString()}] ${message}`,
-        ]);
-      }
-    }
-
-    if (tab === "records") {
-      await fetchRecords(1, false);
-    }
-
-    if (tab === "config") {
-      fetchCookies();
-    }
+    if (tab === "execution") await fetchStats();
+    if (tab === "records") await fetchRecords(1, false, recordsFilter);
+    if (tab === "config") fetchCookies();
   };
 
   const fetchCookies = async () => {
@@ -75,14 +57,8 @@ export default function Home() {
     try {
       const res = await fetch("/api/cookies");
       const data = await res.json();
-      if (res.ok) {
-        setCookies(data.cookies || []);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingCookies(false);
-    }
+      if (res.ok) setCookies(data.cookies || []);
+    } catch (e) { console.error(e); } finally { setLoadingCookies(false); }
   };
 
   const handleAddCookie = async () => {
@@ -94,404 +70,165 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value: newCookieValue }),
       });
-      const data = await res.json();
       if (res.ok) {
         setNewCookieValue("");
-        setCookieMessage("Sessão adicionada com sucesso!");
+        setCookieMessage("Sessão adicionada!");
         await fetchCookies();
         setTimeout(() => setCookieMessage(""), 3000);
       } else {
+        const data = await res.json();
         setCookieMessage(`Erro: ${data.error}`);
       }
-    } catch (e) {
-      setCookieMessage("Erro ao adicionar sessão.");
-    }
+    } catch (e) { setCookieMessage("Erro ao adicionar."); }
   };
 
   const handleDeleteCookie = async (id) => {
     try {
       const res = await fetch(`/api/cookies/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        await fetchCookies();
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok) await fetchCookies();
+    } catch (e) { console.error(e); }
   };
 
-  const fetchRecords = async (page = 1, append = false) => {
+  const fetchRecords = async (page = 1, append = false, status = "SUCCESS") => {
     setLoadingRecords(true);
     try {
-      const res = await fetch(
-        `/api/records?page=${page}&pageSize=${PAGE_SIZE}`,
-      );
+      const url = `/api/records?page=${page}&pageSize=${PAGE_SIZE}${status ? `&status=${status}` : ''}`;
+      const res = await fetch(url);
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Erro ao buscar registros.");
-      }
-
-      setRecords((prev) =>
-        append ? [...prev, ...data.records] : data.records,
-      );
+      if (!res.ok) throw new Error(data.error || "Erro.");
+      setRecords((prev) => append ? [...prev, ...data.records] : data.records);
       setRecordsPage(data.page);
       setRecordsTotal(data.total);
       setRecordsHasMore(data.hasMore);
-    } finally {
-      setLoadingRecords(false);
-    }
+    } finally { setLoadingRecords(false); }
   };
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
+  const handleFilterChange = (newStatus) => {
+    setRecordsFilter(newStatus);
+    fetchRecords(1, false, newStatus);
   };
+
+  const handleFileChange = (e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); };
 
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
-    setUploadMessage("");
-
     const formData = new FormData();
     formData.append("file", file);
-
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
-
-      if (res.ok) {
-        setUploadMessage(
-          `Upload concluído! Total: ${data.totalRows ?? 0}, Inseridos: ${data.inserted ?? 0}, Ignorados (duplicados): ${data.skipped ?? 0}, Inválidos: ${data.invalid ?? 0}`,
-        );
-        setFile(null);
-      } else {
-        setUploadMessage(`Erro: ${data.error}`);
-      }
-    } catch (e) {
-      setUploadMessage("Erro na requisição de upload.");
-    } finally {
-      setUploading(false);
-    }
+      if (res.ok) setUploadMessage(`Upload ok!`);
+      else setUploadMessage(`Erro: ${data.error}`);
+    } catch (e) { setUploadMessage("Erro no upload."); } finally { setUploading(false); }
   };
 
   const handleScrape = async () => {
-    if (scrapeCount < 1) return;
     setScraping(true);
-    setLogs((prev) => [
-      ...prev,
-      `[${new Date().toLocaleTimeString()}] Iniciando coleta de ${scrapeCount} perfis...`,
-    ]);
-
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Iniciando...`]);
     try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: scrapeCount }),
-      });
+      const res = await fetch("/api/scrape", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ count: scrapeCount }) });
       const data = await res.json();
-
-      if (res.ok) {
-        let successMsg = `[${new Date().toLocaleTimeString()}] Processados: ${data.processed || 0}`;
-        if (data.authwalls > 0) {
-            successMsg += ` (⚠️ ${data.authwalls} bloqueados por Authwall)`;
-        } else {
-            successMsg = `[${new Date().toLocaleTimeString()}] Sucesso! Perfis processados: ${data.processed || 0}`;
-        }
-        setLogs((prev) => [
-          ...prev,
-          successMsg,
-        ]);
-      } else {
-        setLogs((prev) => [
-          ...prev,
-          `[${new Date().toLocaleTimeString()}] Erro: ${data.error}`,
-        ]);
-      }
-
+      if (res.ok) setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Sucesso: ${data.processed}`]);
+      else setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Erro: ${data.error}`]);
       await fetchStats();
-    } catch (e) {
-      setLogs((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] Erro fatal na coleta.`,
-      ]);
-    } finally {
-      setScraping(false);
-    }
+    } catch (e) { setLogs(prev => [...prev, `Erro fatal.`]); } finally { setScraping(false); }
   };
 
-  const handleRefreshStats = async () => {
-    setRefreshingStats(true);
-    try {
-      await fetchStats();
-      setLogs((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] Registros atualizados manualmente.`,
-      ]);
-    } catch (e) {
-      setLogs((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] Erro ao atualizar registros.`,
-      ]);
-    } finally {
-      setRefreshingStats(false);
-    }
-  };
-
-  const handleExportCsv = async () => {
-    setExportingCsv(true);
-    try {
-      const res = await fetch("/api/export");
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Falha ao exportar CSV.");
-      }
-
-      const blob = await res.blob();
-      const contentDisposition = res.headers.get("content-disposition") || "";
-      const match = contentDisposition.match(/filename="?([^\"]+)"?/i);
-      const filename = match?.[1] || "linkedin_profiles_export.csv";
-
-      const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.URL.revokeObjectURL(url);
-
-      setLogs((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] CSV exportado com sucesso.`,
-      ]);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Erro ao exportar CSV.";
-      setLogs((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] ${message}`,
-      ]);
-    } finally {
-      setExportingCsv(false);
-    }
-  };
-
-  const handleRetryRecord = async (record) => {
-    setRetryingRecordId(record.id);
-    try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileId: record.id }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Falha ao reprocessar o registro.");
-      }
-
-      setLogs((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] Reprocessado: ${record.name}`,
-      ]);
-
-      await Promise.all([fetchStats(), fetchRecords(1, false)]);
-    } catch (e) {
-      const message =
-        e instanceof Error ? e.message : "Falha ao reprocessar o registro.";
-      setLogs((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] ${record.name}: ${message}`,
-      ]);
-    } finally {
-      setRetryingRecordId(null);
-    }
+  const handleCopyBookmarklet = () => {
+    navigator.clipboard.writeText(bookmarkletCode);
+    alert("Código copiado! Atualize seu favorito.");
   };
 
   return (
     <div className="container">
       <header>
         <h1>LinkedIn Scraper</h1>
-        <p className="subtitle">
-          Extração automatizada de avatares com Voyager API
-        </p>
+        <p className="subtitle">Extração via Voyager API</p>
       </header>
 
       <div className="tabs">
-        <button
-          className={`tab-btn ${activeTab === "upload" ? "active" : ""}`}
-          onClick={() => handleTabChange("upload")}
-        >
-          Upload CSV
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "execution" ? "active" : ""}`}
-          onClick={() => handleTabChange("execution")}
-        >
-          Execução
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "records" ? "active" : ""}`}
-          onClick={() => handleTabChange("records")}
-        >
-          Registros
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "config" ? "active" : ""}`}
-          onClick={() => handleTabChange("config")}
-        >
-          Configuração
-        </button>
+        {["upload", "execution", "records", "config"].map(tab => (
+          <button key={tab} className={`tab-btn ${activeTab === tab ? "active" : ""}`} onClick={() => handleTabChange(tab)}>
+            {tab === "upload" ? "Upload CSV" : tab === "execution" ? "Execução" : tab === "records" ? "Registros" : "Configuração"}
+          </button>
+        ))}
       </div>
 
       {activeTab === "upload" && (
         <div className="card">
-          <h2>Adicionar Novos Perfis</h2>
-          <p style={{ color: "var(--text-secondary)", marginBottom: "20px", fontSize: "0.9rem" }}>
-            Faça upload de um arquivo CSV contendo as colunas <strong>Name</strong> e <strong>LinkedInURL</strong>.
-          </p>
-          <div className="input-group">
-            <input type="file" accept=".csv" onChange={handleFileChange} />
-          </div>
-          <button className="btn" onClick={handleUpload} disabled={!file || uploading} style={{ width: "100%" }}>
-            {uploading ? "Processando..." : "Importar para Banco de Dados"}
+          <h2>Importar Perfis</h2>
+          <input type="file" accept=".csv" onChange={handleFileChange} />
+          <button className="btn" onClick={handleUpload} disabled={!file || uploading} style={{ width: "100%", marginTop: "15px" }}>
+            Importar CSV
           </button>
-          {uploadMessage && (
-            <div style={{ marginTop: "20px", padding: "15px", background: "rgba(16, 185, 129, 0.1)", color: "var(--success-color)", borderRadius: "8px", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-              {uploadMessage}
-            </div>
-          )}
         </div>
       )}
 
       {activeTab === "execution" && (
         <div className="card">
           <div className="stats-grid">
-            <div className="stat-box">
-              <div className="stat-value primary">{stats.total}</div>
-              <div className="stat-label">Total de Registros</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-value warning">{stats.missingAvatar}</div>
-              <div className="stat-label">Faltando Avatar</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-value success">{stats.success}</div>
-              <div className="stat-label">Extraídos (Sucesso)</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-value primary">{stats.scratched}</div>
-              <div className="stat-label">Já Raspados</div>
-            </div>
+            <div className="stat-box"><div className="stat-value primary">{stats.total}</div><div className="stat-label">Total</div></div>
+            <div className="stat-box"><div className="stat-value warning">{stats.missingAvatar}</div><div className="stat-label">Faltando</div></div>
+            <div className="stat-box"><div className="stat-value success">{stats.success}</div><div className="stat-label">Sucesso</div></div>
           </div>
-
           <div className="input-group">
-            <label>Quantidade de registros para coletar</label>
-            <input type="number" min="1" max="50" value={scrapeCount} onChange={(e) => setScrapeCount(parseInt(e.target.value) || 1)} />
+            <label>Quantidade:</label>
+            <input type="number" value={scrapeCount} onChange={e => setScrapeCount(parseInt(e.target.value))} />
           </div>
-
-          <div className="actions-row">
-            <button className="btn" onClick={handleScrape} disabled={scraping || stats.missingAvatar === 0} style={{ width: "100%" }}>
-              {scraping ? "Rodando Scraper..." : "Iniciar Extração"}
-            </button>
-            <button className="btn btn-secondary" onClick={handleRefreshStats} disabled={refreshingStats} style={{ width: "100%" }}>
-              {refreshingStats ? "Atualizando..." : "Atualizar Registros"}
-            </button>
-            <button className="btn btn-secondary" onClick={handleExportCsv} disabled={exportingCsv || stats.total === 0} style={{ width: "100%" }}>
-              {exportingCsv ? "Exportando..." : "Exportar CSV"}
-            </button>
-          </div>
-
-          <div className="log-panel">
-            {logs.length === 0 ? <span style={{ opacity: 0.5 }}>Aguardando início...</span> : logs.map((log, i) => <div key={i} className="log-entry">{log}</div>)}
-          </div>
+          <button className="btn" onClick={handleScrape} disabled={scraping} style={{ width: "100%" }}>
+            {scraping ? "Coletando..." : "Iniciar"}
+          </button>
+          <div className="log-panel">{logs.map((l, i) => <div key={i} className="log-entry">{l}</div>)}</div>
         </div>
       )}
 
       {activeTab === "records" && (
         <div className="card">
           <div className="records-header">
-            <h2>Registros Coletados</h2>
-            <span className="records-total">Total: {recordsTotal}</span>
+            <h2>Resultados da Coleta</h2>
+            <div className="filter-group" style={{ display: "flex", gap: "10px" }}>
+              <button className={`btn-compact ${recordsFilter === "SUCCESS" ? "active" : ""}`} onClick={() => handleFilterChange("SUCCESS")}>Com Foto</button>
+              <button className={`btn-compact ${recordsFilter === "ERROR" ? "active" : ""}`} onClick={() => handleFilterChange("ERROR")}>Com Erro</button>
+              <button className={`btn-compact ${recordsFilter === "" ? "active" : ""}`} onClick={() => handleFilterChange("")}>Todos</button>
+            </div>
           </div>
-          {records.length === 0 && !loadingRecords ? (
-            <div className="records-empty">Nenhum registro encontrado.</div>
-          ) : (
-            <div className="records-list">
-              {records.map((record) => (
-                <div key={record.id} className="record-item">
+          <div className="records-list" style={{ marginTop: "20px" }}>
+            {records.length === 0 && !loadingRecords ? (
+              <p>Nenhum registro encontrado para este filtro.</p>
+            ) : (
+              records.map(r => (
+                <div key={r.id} className="record-item">
                   <div className="record-photo-wrapper">
-                    {record.profilePictureUrl ? (
-                      <Image src={record.profilePictureUrl} alt={record.name} className="record-photo" width={88} height={88} loading="lazy" unoptimized />
+                    {r.profilePictureUrl ? (
+                      <Image src={r.profilePictureUrl} alt={r.name} width={88} height={88} className="record-photo" unoptimized />
                     ) : (
-                      <div className="record-no-photo">Sem foto</div>
+                      <div className="record-no-photo">N/A</div>
                     )}
                   </div>
-                  <div className="record-content">
-                    <div className="record-name">{record.name}</div>
-                    <a href={record.linkedinUrl} target="_blank" rel="noreferrer" className="record-link">LinkedIn</a>
-                    <div className="record-meta">
-                      <span>Status: {record.status}</span>
-                      <span>Tentativas: {record.scratchAttempts}</span>
-                    </div>
-                    <button className="btn btn-secondary btn-compact" onClick={() => handleRetryRecord(record)} disabled={retryingRecordId === record.id}>
-                      {retryingRecordId === record.id ? "Tentando..." : "Tentar novamente"}
-                    </button>
+                  <div style={{ marginLeft: "15px" }}>
+                    <div style={{ fontWeight: "bold" }}>{r.name}</div>
+                    <div style={{ fontSize: "0.8rem", opacity: 0.7 }}>Status: {r.status}</div>
+                    <a href={r.linkedinUrl} target="_blank" rel="noreferrer" style={{ fontSize: "0.8rem", color: "#60a5fa" }}>Ver Perfil</a>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-          <div className="records-actions">
-            <button className="btn btn-secondary" onClick={() => fetchRecords(1, false)} disabled={loadingRecords}>Atualizar</button>
-            <button className="btn" onClick={() => fetchRecords(recordsPage + 1, true)} disabled={loadingRecords || !recordsHasMore}>Carregar Mais</button>
+              ))
+            )}
+          </div>
+          <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+            <button className="btn btn-secondary" onClick={() => fetchRecords(1, false, recordsFilter)} disabled={loadingRecords}>Atualizar</button>
+            <button className="btn" onClick={() => fetchRecords(recordsPage + 1, true, recordsFilter)} disabled={loadingRecords || !recordsHasMore}>Ver Mais</button>
           </div>
         </div>
       )}
 
       {activeTab === "config" && (
         <div className="card">
-          <h2>Sessão do LinkedIn</h2>
-          
-          <div style={{ background: "rgba(37, 99, 235, 0.1)", padding: "20px", borderRadius: "10px", border: "1px solid rgba(37, 99, 235, 0.3)", marginBottom: "20px" }}>
-            <h3 style={{ marginBottom: "10px", fontSize: "1.1rem", color: "#60a5fa" }}>🚀 Capturar do Navegador (Mais Fácil)</h3>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "15px" }}>
-              Arraste o botão abaixo para a sua barra de favoritos. Depois, vá ao LinkedIn e clique no favorito para sincronizar sua sessão.
-            </p>
-            <a 
-              href={`javascript:(function(){const cookies=document.cookie;fetch('http://localhost:3000/api/cookies/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookies:cookies})}).then(r=>r.json()).then(data=>{if(data.success)alert('✅ Sessão sincronizada!');else alert('❌ Erro: '+data.error);}).catch(e=>alert('❌ Erro: Verifique se o servidor está em localhost:3000'));})();`}
-              style={{ display: "inline-block", background: "var(--primary-color)", color: "white", padding: "10px 20px", borderRadius: "25px", textDecoration: "none", fontWeight: "bold", fontSize: "0.9rem", cursor: "move", boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)" }}
-              onClick={(e) => e.preventDefault()}
-            >
-              ➕ Sincronizar LinkedIn
-            </a>
-          </div>
-
-          <div style={{ background: "rgba(0,0,0,0.2)", padding: "20px", borderRadius: "10px", border: "1px solid var(--surface-border)", marginBottom: "20px" }}>
-            <h3 style={{ marginBottom: "15px", fontSize: "1.1rem" }}>Adicionar Manualmente</h3>
-            <div className="input-group">
-              <label>Valor do cookie <code>li_at</code>:</label>
-              <textarea value={newCookieValue} onChange={(e) => setNewCookieValue(e.target.value)} placeholder="Cole o valor do cookie aqui..." rows="3" style={{ background: "rgba(0, 0, 0, 0.2)", border: "1px solid var(--surface-border)", color: "var(--text-primary)", padding: "12px 16px", borderRadius: "10px", fontSize: "1rem", outline: "none", fontFamily: "monospace", resize: "vertical" }} />
-            </div>
-            <button className="btn" onClick={handleAddCookie} disabled={!newCookieValue.trim()} style={{ marginTop: "10px" }}>Adicionar Sessão</button>
-            {cookieMessage && <span style={{ marginLeft: "15px", color: cookieMessage.includes("Erro") ? "var(--error-color)" : "var(--success-color)", fontSize: "0.9rem" }}>{cookieMessage}</span>}
-          </div>
-
-          <div style={{ background: "rgba(0,0,0,0.2)", padding: "20px", borderRadius: "10px", border: "1px solid var(--surface-border)" }}>
-            <h3 style={{ marginBottom: "15px", fontSize: "1.1rem" }}>Sessões Ativas ({cookies.length})</h3>
-            {loadingCookies ? <p>Carregando...</p> : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {cookies.map(c => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255,255,255,0.05)", padding: "10px 15px", borderRadius: "8px" }}>
-                    <div style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "var(--text-secondary)" }}>{c.value.substring(0, 30)}...</div>
-                    <button onClick={() => handleDeleteCookie(c.id)} style={{ background: "transparent", border: "1px solid var(--error-color)", color: "var(--error-color)", padding: "5px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "0.8rem" }}>Remover</button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <h2>Configuração de Sessão</h2>
+          <div style={{ background: "rgba(0,0,0,0.2)", padding: "20px", borderRadius: "10px", marginBottom: "20px" }}>
+            <h3>Valor do Cookie li_at</h3>
+            <textarea value={newCookieValue} onChange={(e) => setNewCookieValue(e.target.value)} placeholder="Cole aqui o cookie li_at..." rows="3" style={{ width: "100%", background: "rgba(0,0,0,0.3)", color: "white", padding: "10px", marginTop: "10px" }} />
+            <button className="btn" onClick={handleAddCookie} disabled={!newCookieValue.trim()} style={{ marginTop: "10px" }}>Salvar</button>
           </div>
         </div>
       )}
