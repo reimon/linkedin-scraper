@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { chromium } from "playwright";
+import { chromium, firefox } from "playwright";
 
 const LOGIN_URL = "https://www.linkedin.com/login";
 const FEED_URL_PATTERN = /linkedin\.com\/feed/;
@@ -15,11 +15,86 @@ const COOKIE_KEYS = [
   "li_gc",
 ];
 
+const BASE_BROWSER_ARGS = ["--no-sandbox", "--disable-setuid-sandbox"];
+const FALLBACK_CHANNELS = ["chrome", "msedge", "chromium"];
+const BROWSER_TYPES = { chromium, firefox };
+
+function normalizeBrowserName(value) {
+  const name = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (name === "firefox") return "firefox";
+  return "chromium";
+}
+
+async function tryLaunchBrowser(browserName, options) {
+  const browserType = BROWSER_TYPES[browserName] || chromium;
+  try {
+    return await browserType.launch(options);
+  } catch {
+    return null;
+  }
+}
+
+async function launchLinkedInBrowser() {
+  const headless = true;
+  const preferredBrowserName = normalizeBrowserName(
+    process.env.PLAYWRIGHT_BROWSER_NAME,
+  );
+  const browserOrder = [
+    preferredBrowserName,
+    ...Object.keys(BROWSER_TYPES).filter(
+      (name) => name !== preferredBrowserName,
+    ),
+  ];
+  const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH?.trim();
+  const preferredChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL?.trim();
+
+  for (const browserName of browserOrder) {
+    if (executablePath) {
+      const browser = await tryLaunchBrowser(browserName, {
+        headless,
+        executablePath,
+        args: BASE_BROWSER_ARGS,
+      });
+      if (browser) return browser;
+    }
+
+    if (browserName === "chromium" && preferredChannel) {
+      const browser = await tryLaunchBrowser(browserName, {
+        headless,
+        channel: preferredChannel,
+        args: BASE_BROWSER_ARGS,
+      });
+      if (browser) return browser;
+    }
+
+    const bundled = await tryLaunchBrowser(browserName, {
+      headless,
+      args: BASE_BROWSER_ARGS,
+    });
+    if (bundled) return bundled;
+
+    if (browserName === "chromium") {
+      for (const channel of FALLBACK_CHANNELS) {
+        if (channel === preferredChannel) continue;
+        const browser = await tryLaunchBrowser(browserName, {
+          headless,
+          channel,
+          args: BASE_BROWSER_ARGS,
+        });
+        if (browser) return browser;
+      }
+    }
+  }
+
+  throw new Error(
+    "Nao foi possivel iniciar navegador. Defina PLAYWRIGHT_BROWSER_NAME=firefox (ou chromium) e configure PLAYWRIGHT_BROWSER_CHANNEL/PLAYWRIGHT_EXECUTABLE_PATH.",
+  );
+}
+
 async function doLinkedInLogin(email, password) {
-  const browser = await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  const browser = await launchLinkedInBrowser();
 
   try {
     const context = await browser.newContext({

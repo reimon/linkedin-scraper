@@ -81,9 +81,26 @@ npm ci
 
 echo "[4/8] Instalando navegador do Playwright..."
 if [[ "$SKIP_PLAYWRIGHT_DEPS" == "true" ]]; then
-  npx playwright install chromium
+  if ! npx playwright install chromium; then
+    echo "Aviso: Chromium do Playwright indisponivel neste sistema. Tentando Firefox..."
+    if ! npx playwright install firefox; then
+      echo "Aviso: Firefox do Playwright tambem indisponivel neste sistema."
+      echo "Continue com um navegador do sistema e defina PLAYWRIGHT_BROWSER_NAME=firefox ou PLAYWRIGHT_BROWSER_CHANNEL=chrome no .env."
+    fi
+  fi
 else
-  npx playwright install --with-deps chromium
+  if ! npx playwright install --with-deps chromium; then
+    echo "Aviso: falha ao instalar Chromium com --with-deps; tentando sem dependencias de SO..."
+    if ! npx playwright install chromium; then
+      echo "Aviso: Chromium do Playwright nao suportado neste SO. Tentando Firefox..."
+      if ! npx playwright install --with-deps firefox; then
+        if ! npx playwright install firefox; then
+          echo "Aviso: Firefox do Playwright tambem nao suportado neste SO."
+          echo "O setup vai continuar; instale um navegador no sistema e configure PLAYWRIGHT_BROWSER_NAME=firefox ou PLAYWRIGHT_BROWSER_CHANNEL=chrome."
+        fi
+      fi
+    fi
+  fi
 fi
 
 echo "[5/8] Gerando Prisma Client..."
